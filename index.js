@@ -74,20 +74,11 @@ async function run() {
       res.send(result);
     });
 
-    // app.get("/join_event/:email", verifyIdToken, async (req, res) => {
-    //   const email = req.params.email;
-    //   const result = await joinEventCollection
-    //     .find({ userEmail: email })
-    //     .toArray();
-    //   res.send(result);
-    // });
 
-    // জয়েন করা ইভেন্টের আপডেটেড তথ্য পাওয়ার API
     app.get("/join_event/:email", verifyIdToken, async (req, res) => {
       try {
         const email = req.params.email;
 
-        // ইউজারের জয়েন করা ইভেন্টগুলো খুঁজুন
         const joinedEvents = await joinEventCollection
           .find({ userEmail: email })
           .toArray();
