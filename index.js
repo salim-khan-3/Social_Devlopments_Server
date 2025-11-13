@@ -74,13 +74,76 @@ async function run() {
       res.send(result);
     });
 
+    // app.get("/join_event/:email", verifyIdToken, async (req, res) => {
+    //   const email = req.params.email;
+    //   const result = await joinEventCollection
+    //     .find({ userEmail: email })
+    //     .toArray();
+    //   res.send(result);
+    // });
 
+    // জয়েন করা ইভেন্টের আপডেটেড তথ্য পাওয়ার API
     app.get("/join_event/:email", verifyIdToken, async (req, res) => {
-      const email = req.params.email;
-      const result = await joinEventCollection
-        .find({ userEmail: email })
-        .toArray();
-      res.send(result);
+      try {
+        const email = req.params.email;
+
+        // ইউজারের জয়েন করা ইভেন্টগুলো খুঁজুন
+        const joinedEvents = await joinEventCollection
+          .find({ userEmail: email })
+          .toArray();
+
+        // প্রতিটি জয়েন করা ইভেন্টের বর্তমান তথ্য নিন
+        const joinedEventsWithDetails = await Promise.all(
+          joinedEvents.map(async (joinedEvent) => {
+            try {
+              const eventId = new ObjectId(joinedEvent.eventId);
+              const currentEvent = await eventCollection.findOne({
+                _id: eventId,
+              });
+
+              if (currentEvent) {
+                return {
+                  ...joinedEvent,
+                  currentTitle: currentEvent.title,
+                  currentDescription: currentEvent.description,
+                  currentThumbnail: currentEvent.thumbnail,
+                  currentLocation: currentEvent.location,
+                  currentEventDate: currentEvent.eventDate,
+                  currentEventType: currentEvent.eventType,
+                  isEventUpdated:
+                    joinedEvent.title !== currentEvent.title ||
+                    joinedEvent.description !== currentEvent.description ||
+                    joinedEvent.thumbnail !== currentEvent.thumbnail ||
+                    joinedEvent.location !== currentEvent.location ||
+                    joinedEvent.eventDate !== currentEvent.eventDate,
+                };
+              }
+              return null;
+            } catch (error) {
+              console.error("Error fetching event details:", error);
+              return null;
+            }
+          })
+        );
+
+        // null ভ্যালুগুলো ফিল্টার করুন
+        const filteredEvents = joinedEventsWithDetails.filter(
+          (event) => event !== null
+        );
+
+        // তারিখ অনুসারে সর্ট করুন
+        const sortedData = filteredEvents.sort(
+          (a, b) => new Date(a.currentEventDate) - new Date(b.currentEventDate)
+        );
+
+        res.send(sortedData);
+      } catch (error) {
+        console.error("Error in joined_events_with_details:", error);
+        res.status(500).send({
+          success: false,
+          message: "Failed to fetch joined events with details",
+        });
+      }
     });
 
     app.post("/events", async (req, res) => {
@@ -90,11 +153,35 @@ async function run() {
     });
 
     app.post("/join_event", async (req, res) => {
-      const joinEventData = req.body;
-      const result = await joinEventCollection.insertOne(joinEventData);
-      res.send(result);
-    });
+      try {
+        const joinEventData = req.body;
 
+        const eventId = new ObjectId(joinEventData.eventId);
+        const currentEvent = await eventCollection.findOne({ _id: eventId });
+
+        if (currentEvent) {
+          joinEventData.title = currentEvent.title;
+          joinEventData.description = currentEvent.description;
+          joinEventData.thumbnail = currentEvent.thumbnail;
+          joinEventData.location = currentEvent.location;
+          joinEventData.eventDate = currentEvent.eventDate;
+          joinEventData.eventType = currentEvent.eventType;
+        }
+
+        const result = await joinEventCollection.insertOne(joinEventData);
+        res.send({
+          success: true,
+          result: result,
+          message: "Successfully joined the event",
+        });
+      } catch (error) {
+        console.error("Join event error:", error);
+        res.status(500).send({
+          success: false,
+          message: "Failed to join event",
+        });
+      }
+    });
     app.put("/events/:id", async (req, res) => {
       const { id } = req.params;
       const data = req.body;
@@ -107,7 +194,6 @@ async function run() {
       res.send(result);
     });
 
-   
     app.delete("/events/:id", verifyIdToken, async (req, res) => {
       const { id } = req.params;
       const objectId = new ObjectId(id);
