@@ -74,7 +74,6 @@ async function run() {
       res.send(result);
     });
 
-
     app.get("/join_event/:email", verifyIdToken, async (req, res) => {
       try {
         const email = req.params.email;
@@ -82,7 +81,6 @@ async function run() {
         const joinedEvents = await joinEventCollection
           .find({ userEmail: email })
           .toArray();
-
 
         const joinedEventsWithDetails = await Promise.all(
           joinedEvents.map(async (joinedEvent) => {
@@ -171,7 +169,7 @@ async function run() {
         });
       }
     });
-    app.put("/events/:id", async (req, res) => {
+    app.put("/events/:id", verifyIdToken, async (req, res) => {
       const { id } = req.params;
       const data = req.body;
       const objectId = new ObjectId(id);
