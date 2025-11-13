@@ -92,7 +92,7 @@ async function run() {
           .find({ userEmail: email })
           .toArray();
 
-        // প্রতিটি জয়েন করা ইভেন্টের বর্তমান তথ্য নিন
+
         const joinedEventsWithDetails = await Promise.all(
           joinedEvents.map(async (joinedEvent) => {
             try {
@@ -126,12 +126,10 @@ async function run() {
           })
         );
 
-        // null ভ্যালুগুলো ফিল্টার করুন
         const filteredEvents = joinedEventsWithDetails.filter(
           (event) => event !== null
         );
 
-        // তারিখ অনুসারে সর্ট করুন
         const sortedData = filteredEvents.sort(
           (a, b) => new Date(a.currentEventDate) - new Date(b.currentEventDate)
         );
