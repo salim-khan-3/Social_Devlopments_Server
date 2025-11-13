@@ -94,56 +94,56 @@ async function run() {
       res.send(result);
     });
 
-    // app.put("/events/:id", async (req, res) => {
-    //   const { id } = req.params;
-    //   const data = req.body;
-    //   const objectId = new ObjectId(id);
-    //   const filter = { _id: objectId };
-    //   const update = {
-    //     $set: data,
-    //   };
-    //   const result = await eventCollection.updateOne(filter, update);
-    //   res.send(result);
-    // });
+    app.put("/events/:id",verifyIdToken, async (req, res) => {
+      const { id } = req.params;
+      const data = req.body;
+      const objectId = new ObjectId(id);
+      const filter = { _id: objectId };
+      const update = {
+        $set: data,
+      };
+      const result = await eventCollection.updateOne(filter, update);
+      res.send(result);
+    });
 
-app.put("/events/:id", verifyIdToken, async (req, res) => {
-  const { id } = req.params;
-  const data = req.body;
-  const objectId = new ObjectId(id);
+//   app.put("/events/:id", verifyIdToken, async (req, res) => {
+//   const { id } = req.params;
+//   const data = req.body;
+//   const objectId = new ObjectId(id);
 
-  try {
-    // 1️⃣ Update the main event
-    const result = await eventCollection.updateOne(
-      { _id: objectId },
-      { $set: data }
-    );
+//   try {
+//     // 1️⃣ Update the main event
+//     const result = await eventCollection.updateOne(
+//       { _id: objectId },
+//       { $set: data }
+//     );
 
-    if (result.matchedCount === 0) {
-      return res.status(404).send({ success: false, message: "Event not found" });
-    }
+//     if (result.matchedCount === 0) {
+//       return res.status(404).send({ success: false, message: "Event not found" });
+//     }
 
-    // 2️⃣ Update all join_event entries that reference this event
-    // Ensure eventId is stored as string in join_event for matching
-    await joinEventCollection.updateMany(
-      { eventId: id }, // match eventId as string
-      {
-        $set: {
-          title: data.title,
-          description: data.description,
-          eventType: data.eventType,
-          thumbnail: data.thumbnail,
-          location: data.location,
-          eventDate: data.eventDate,
-        },
-      }
-    );
+//     // 2️⃣ Update all join_event entries that reference this event
+//     // Ensure eventId is stored as string in join_event for matching
+//     await joinEventCollection.updateMany(
+//       { eventId: id }, // match eventId as string
+//       {
+//         $set: {
+//           title: data.title,
+//           description: data.description,
+//           eventType: data.eventType,
+//           thumbnail: data.thumbnail,
+//           location: data.location,
+//           eventDate: data.eventDate,
+//         },
+//       }
+//     );
 
-    res.send({ success: true, message: "Event updated successfully" });
-  } catch (error) {
-    console.error("Update error:", error);
-    res.status(500).send({ success: false, message: "Failed to update event" });
-  }
-});
+//     res.send({ success: true, message: "Event updated successfully" });
+//   } catch (error) {
+//     console.error("Update error:", error);
+//     res.status(500).send({ success: false, message: "Failed to update event" });
+//   }
+// });
 
 
     app.delete("/events/:id", verifyIdToken, async (req, res) => {
